@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/hongster/message-forwarder/config"
 	"github.com/hongster/message-forwarder/logger"
+	"github.com/hongster/message-forwarder/worker"
 	"github.com/streadway/amqp"
 	"fmt"
 )
@@ -13,43 +14,55 @@ func main() {
 	// Setup connection
 	connection, err := amqp.Dial(amqpURL())
 	if err != nil {
-		logger.ERROR("Can't connect to AMQP server: %v", err)
+		logger.Error("Can't connect to AMQP server: %v", err)
 		return
 	}
 
 	defer func() {
 		connection.Close()
-		logger.INFO("Connection closed")
+		logger.Info("Connection closed")
 	}()
 
 	// Setup channel
 	channel, err := connection.Channel()
 	if err != nil {
-		logger.ERROR("Can't get channel: %v", err)
+		logger.Error("Can't get channel: %v", err)
 		return
 	}
 
 	// Graceful cancelling and closing channel
 	defer func() {
 		channel.Cancel(CONSUMER_ID, false)
-		logger.INFO("Connection cancelled")
+		logger.Info("Connection cancelled")
 	}()
 
 	// Request message to be ACK upon consumption
 	deliveryChan, err := channel.Consume(exchangeName(), CONSUMER_ID, false, false, false, false, nil)
 	if err != nil {
-		logger.ERROR("Can't consume: %v", err)
+		logger.Error("Can't consume: %v", err)
 		return
 	}
 
 	// Process task messages
 	for delivery := range deliveryChan {
-		logger.DEBUG("%v", string(delivery.Body))
-		delivery.Ack(false)
+
+		// Each message is processed in a Go routine. ACK will be sent if upon
+		// successful processing, NACK otherwise.
+		go func() {
+			err = worker.Process(delivery)
+			if err != nil {
+				logger.Error("%s", err)
+				delivery.Nack(false, false)
+				return
+			}
+
+			delivery.Ack(false)
+		}()
+
 	}
 }
 
-// Get exhange name.
+// Get exhange name from config file.
 func exchangeName() string {
 	configReader := config.NewReader()
 	return configReader.StringDefault("message", "exchange", "callback")

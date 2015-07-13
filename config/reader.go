@@ -1,6 +1,4 @@
-/*
-Read configuration INI config from /etc/message-forwarder.cfg
-*/
+// Read configuration INI config from /etc/message-forwarder.cfg
 package config
 
 import (
