@@ -1,33 +1,24 @@
-// Read configuration INI config from /etc/message-forwarder.cfg
 package config
 
 import (
-	"fmt"
 	"github.com/robfig/config"
 )
-
-const CONFIG_FILE = "/etc/message-forwarder.cfg"
 
 type Reader struct {
 	config *config.Config
 }
 
-func NewReader() *Reader {
-	config, err := config.ReadDefault(CONFIG_FILE)
+// filepath E.g. ""/etc/someconfig.cfg"
+func NewReader(filepath string) (reader *Reader, err error) {
+	config, err := config.ReadDefault(filepath)
 	if err != nil {
-		config = nil
+		return nil, err
 	}
 
-	return &Reader{
-		config: config,
-	}
+	return &Reader{config: config}, nil
 }
 
 func (reader *Reader) Bool(section string, option string) (value bool, err error) {
-	if reader.config == nil {
-		return false, fmt.Errorf("Missing config file: %s", CONFIG_FILE)
-	}
-
 	return reader.config.Bool(section, option)
 }
 
@@ -44,10 +35,6 @@ func (reader *Reader) BoolDefault(section string, option string, def bool) (valu
 }
 
 func (reader *Reader) Int(section string, option string) (value int, err error) {
-	if reader.config == nil {
-		return 0, fmt.Errorf("Missing config file: %s", CONFIG_FILE)
-	}
-
 	return reader.config.Int(section, option)
 }
 
@@ -64,10 +51,6 @@ func (reader *Reader) IntDefault(section string, option string, def int) (value 
 }
 
 func (reader *Reader) String(section string, option string) (value string, err error) {
-	if reader.config == nil {
-		return "", fmt.Errorf("Missing config file: %s", CONFIG_FILE)
-	}
-
 	return reader.config.String(section, option)
 }
 
@@ -84,10 +67,6 @@ func (reader *Reader) StringDefault(section string, option string, def string) (
 }
 
 func (reader *Reader) Float(section string, option string) (value float64, err error) {
-	if reader.config == nil {
-		return 0, fmt.Errorf("Missing config file: %s", CONFIG_FILE)
-	}
-
 	return reader.config.Float(section, option)
 }
 

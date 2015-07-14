@@ -2,35 +2,38 @@
 package logger
 
 import (
+	"io"
 	"log"
-	"os"
 )
 
-var infoLogger *log.Logger
-var debugLogger *log.Logger
-var warningLogger *log.Logger
-var errorLogger *log.Logger
-
-// Setup 4 tpes of logger.
-func init() {
-	infoLogger = log.New(os.Stdout, "INFO: ", log.Ldate|log.Ltime|log.Lshortfile)
-	debugLogger = log.New(os.Stdout, "DEBUG: ", log.Ldate|log.Ltime|log.Lshortfile)
-	warningLogger = log.New(os.Stdout, "WARNGNG: ", log.Ldate|log.Ltime|log.Lshortfile)
-	errorLogger = log.New(os.Stdout, "ERROR: ", log.Ldate|log.Ltime|log.Lshortfile)
+type Logger struct {
+	infoLogger *log.Logger
+	debugLogger *log.Logger
+	warningLogger *log.Logger
+	errorLogger *log.Logger
 }
 
-func Info(format string, v ...interface{}) {
-	infoLogger.Printf(format, v...)
+func NewLogger(writer io.Writer) (logger *Logger) {
+	return &Logger{
+		infoLogger: log.New(writer, "INFO: ", log.Ldate|log.Ltime|log.Lshortfile),
+		debugLogger: log.New(writer, "DEBUG: ", log.Ldate|log.Ltime|log.Lshortfile),
+		warningLogger: log.New(writer, "WARNGNG: ", log.Ldate|log.Ltime|log.Lshortfile),
+		errorLogger: log.New(writer, "ERROR: ", log.Ldate|log.Ltime|log.Lshortfile),
+	}
 }
 
-func Debug(format string, v ...interface{}) {
-	debugLogger.Printf(format, v...)
+func (logger *Logger) Info(format string, v ...interface{}) {
+	logger.infoLogger.Printf(format, v...)
 }
 
-func Warn(format string, v ...interface{}) {
-	warningLogger.Printf(format, v...)
+func (logger *Logger) Debug(format string, v ...interface{}) {
+	logger.debugLogger.Printf(format, v...)
 }
 
-func Error(format string, v ...interface{}) {
-	errorLogger.Printf(format, v...)
+func (logger *Logger) Warn(format string, v ...interface{}) {
+	logger.warningLogger.Printf(format, v...)
+}
+
+func (logger *Logger) Error(format string, v ...interface{}) {
+	logger.errorLogger.Printf(format, v...)
 }

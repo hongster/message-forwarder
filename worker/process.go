@@ -2,7 +2,7 @@
 package worker
 
 import (
-	"github.com/hongster/message-forwarder/logger"
+	"github.com/hongster/message-forwarder/app"
 	"github.com/streadway/amqp"
 	"bytes"
 	"fmt"
@@ -21,11 +21,17 @@ func Process(delivery amqp.Delivery) (err error) {
 		return fmt.Errorf("Missing %s message header", CALLBACK_URL_HEADER)
 	}
 
-	logger.Info("Forwarding message to %s", callbackURL)
-	_, err = http.Post(callbackURL.(string), delivery.ContentType, bytes.NewBuffer(delivery.Body))
+	if delivery.UserId == "" {
+		return fmt.Errorf("Dropping message due to missing user ID")
+	}
+
+	app.Logger.Info("Forwarding message from %s to %s", delivery.UserId, callbackURL)
+	resp, err := http.Post(callbackURL.(string), delivery.ContentType, bytes.NewBuffer(delivery.Body))
 	if err != nil {
 		return err
 	}
 
+	app.Logger.Info("Response status code: %d", resp.StatusCode)
+	resp.Body.Close()
 	return nil
 }
