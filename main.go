@@ -4,7 +4,6 @@ import (
 	"github.com/hongster/message-forwarder/app"
 	"github.com/hongster/message-forwarder/worker"
 	"github.com/streadway/amqp"
-	"fmt"
 )
 
 const CONSUMER_ID = "message-forwarder"
@@ -12,7 +11,7 @@ const CONSUMER_ID = "message-forwarder"
 func main() {
 	// Setup connection
 	app.Logger.Info("Connecting to AMQP server...")
-	connection, err := amqp.Dial(amqpURL())
+	connection, err := amqp.Dial(app.AMQPURL())
 	if err != nil {
 		app.Logger.Error("Can't connect to AMQP server: %v", err)
 		return
@@ -38,7 +37,7 @@ func main() {
 	}()
 
 	// Request message to be ACK upon consumption
-	deliveryChan, err := channel.Consume(exchangeName(), CONSUMER_ID, false, false, false, false, nil)
+	deliveryChan, err := channel.Consume(app.ExchangeName(), CONSUMER_ID, false, false, false, false, nil)
 	if err != nil {
 		app.Logger.Error("Can't consume: %v", err)
 		return
@@ -61,20 +60,4 @@ func main() {
 		}()
 
 	}
-}
-
-// Get exhange name from config file.
-func exchangeName() string {
-	return app.Config.StringDefault("message", "exchange", "callback")
-}
-
-// Generate AMQP URL based on configurations.
-// TODO Support SSL connection
-func amqpURL() string {
-	return fmt.Sprintf("amqp://%s:%s@%s:%s/%s",
-		app.Config.StringDefault("DEFAULT", "amqp_username", ""),
-		app.Config.StringDefault("DEFAULT", "amqp_password", ""),
-		app.Config.StringDefault("DEFAULT", "amqp_host", ""),
-		app.Config.StringDefault("DEFAULT", "amqp_port", ""),
-		app.Config.StringDefault("message", "vhost", ""))
 }
