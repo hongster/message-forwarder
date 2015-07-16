@@ -1,0 +1,14 @@
+# Configuration file for running message-forwarder as systemd service.
+# Save this file as /etc/systemd/system/message-forwarder.service
+
+[Unit]
+Description=Get task from message queue and forward to an URL
+Documentation=https://github.com/hongster/message-forwarder
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/message-forwarder
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
